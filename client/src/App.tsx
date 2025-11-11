@@ -36,8 +36,9 @@ function AppContent() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
 
-  // Mock data - will be replaced with API calls in Task 2
-  const [sensorData] = useState<InsertSensorReading>({
+  // Mock data - will be replaced with API calls in Task 3
+  const [sensorData] = useState<SensorReading>({
+    id: "mock-sensor-1",
     timestamp: new Date().toISOString(),
     soilMoisture: 65,
     airHumidity: 55,

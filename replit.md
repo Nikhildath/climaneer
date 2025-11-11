@@ -126,6 +126,43 @@ server/
 └── (To be implemented in Task 2)
 ```
 
+## Recent Changes (Task 2 - Backend)
+**Date**: Current Session
+**Status**: ✅ Complete
+
+### Backend Implementation
+1. **Storage Layer** (`server/storage.ts`)
+   - Complete `IStorage` interface with CRUD methods
+   - `MemStorage` class with in-memory data structures
+   - Sensor readings with history (max 1000 entries)
+   - Alerts management (Map-based storage)
+   - Settings persistence
+   - Statistics calculation
+
+2. **API Endpoints** (`server/routes.ts`)
+   - `POST /api/sensor-readings` - Create sensor reading
+   - `GET /api/sensor-readings/latest` - Get latest reading
+   - `GET /api/sensor-readings/history` - Get history (with limit)
+   - `GET /api/sensor-readings/trends` - Get trend data for charts
+   - `GET /api/alerts` - Get all alerts
+   - `POST /api/alerts` - Create alert
+   - `PATCH /api/alerts/:id/read` - Mark alert as read
+   - `DELETE /api/alerts/:id` - Delete alert
+   - `GET /api/settings` - Get settings
+   - `PUT /api/settings` - Update settings
+   - `GET /api/statistics` - Get calculated stats
+   - `GET /api/system-status` - Get system status
+   - `GET /api/export` - Export data (CSV/JSON)
+   - `POST /api/simulate-reading` - Generate random sensor data
+
+3. **Features**
+   ✅ Zod validation on all endpoints
+   ✅ Proper error handling with status codes
+   ✅ CSV and JSON export with proper headers
+   ✅ History tracking with automatic cleanup
+   ✅ Statistics calculation from sensor data
+   ✅ Real-time simulation endpoint
+
 ## User Preferences
 - User prefers modern, responsive design with mobile-first approach
 - Comprehensive media query support for all screen sizes
@@ -135,14 +172,18 @@ server/
 - Real-time sensor monitoring
 - Settings panel for customization
 
-## Next Steps (Task 2 - Backend)
-- [ ] Implement in-memory storage interface
-- [ ] Create API endpoints for sensor data CRUD
-- [ ] Build alerts management endpoints
-- [ ] Add settings persistence
-- [ ] Implement data export generation (CSV/JSON)
-- [ ] Create service worker for offline caching
-- [ ] Add real-time data simulation/polling
+## Current Status
+✅ Task 1: Schema & Frontend - Complete
+✅ Task 2: Backend API & Storage - Complete
+⏳ Task 3: Integration & Testing - In Progress
+
+## Next Steps (Task 3 - Integration)
+- [ ] Connect frontend to backend APIs with React Query
+- [ ] Replace mock data with real API calls
+- [ ] Add real-time polling for sensor data
+- [ ] Implement service worker for offline caching
+- [ ] Add comprehensive error handling
+- [ ] Test end-to-end user journeys
 
 ## Development Guidelines
 - Keep `index.css` unchanged - use `tailwind.config.ts` for design tokens

@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ReactNode } from "react";
+import { ReactNode, isValidElement } from "react";
 
 interface StatusCardProps {
   title: string;
@@ -29,8 +29,18 @@ export function StatusCard({
   className,
   testId,
 }: StatusCardProps) {
-  const isLucideIcon = typeof icon === "function";
-  const Icon = isLucideIcon ? (icon as LucideIcon) : null;
+  // Determine if icon is already a rendered element or needs to be rendered
+  const renderIcon = () => {
+    if (isValidElement(icon)) {
+      // Already a rendered React element
+      return icon;
+    } else if (typeof icon === "function" || (typeof icon === "object" && icon !== null)) {
+      // It's a component (function or ForwardRef) - render it as JSX
+      const Icon = icon as LucideIcon;
+      return <Icon className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />;
+    }
+    return null;
+  };
 
   return (
     <Card 
@@ -67,11 +77,7 @@ export function StatusCard({
 
         {/* Icon */}
         <div className="flex-shrink-0 flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-lg bg-muted/50">
-          {Icon ? (
-            <Icon className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
-          ) : (
-            <>{icon}</>
-          )}
+          {renderIcon()}
         </div>
       </div>
     </Card>

@@ -6,6 +6,7 @@ import { PHScaleVisualization } from "@/components/PHScaleVisualization";
 import { TemperatureGauge } from "@/components/TemperatureGauge";
 import { AQIBar } from "@/components/AQIBar";
 import { SensorReading, SystemStatus } from "@shared/schema";
+import { Card } from "@/components/ui/card";
 import { 
   Droplets, 
   Cloud, 
@@ -18,17 +19,32 @@ import {
   Cpu,
   Zap,
   Battery,
-  Wifi
+  Wifi,
+  Lightbulb
 } from "lucide-react";
 
 interface DashboardProps {
   sensorData: SensorReading;
   systemStatus: SystemStatus;
+  aiRecommendation?: string;
 }
 
-export function Dashboard({ sensorData, systemStatus }: DashboardProps) {
+export function Dashboard({ sensorData, systemStatus, aiRecommendation }: DashboardProps) {
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-6 pb-24">
+      {/* AI Recommendation Card */}
+      {aiRecommendation && (
+        <Card className="p-6 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border-emerald-200 dark:border-emerald-800">
+          <div className="flex gap-4">
+            <Lightbulb className="h-6 w-6 text-emerald-600 flex-shrink-0" />
+            <div>
+              <h3 className="font-semibold text-emerald-900 dark:text-emerald-100">AI Recommendation</h3>
+              <p className="text-sm text-emerald-800 dark:text-emerald-200 mt-1">{aiRecommendation}</p>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Status Overview */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-testid="status-overview">
         <StatusCard

@@ -26,13 +26,13 @@ const alertColors = {
 };
 
 export function AlertNotification({ alert, onDismiss, onMarkRead }: AlertNotificationProps) {
-  const Icon = alertIcons[alert.type];
+  const Icon = alertIcons[alert.type as keyof typeof alertIcons] ?? AlertCircle;
 
   return (
     <Card
       className={cn(
         "p-4 border-l-4 transition-all duration-300",
-        alertColors[alert.type],
+        alertColors[alert.type as keyof typeof alertColors] ?? alertColors.danger,
         !alert.read && "shadow-md"
       )}
       data-testid={`alert-${alert.id}`}

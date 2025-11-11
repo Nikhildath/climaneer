@@ -90,7 +90,22 @@ export const insertSettingsSchema = createInsertSchema(settings, {
   pollInterval: z.number().min(1000).max(60000),
 }).omit({ id: true });
 export type InsertSettings = z.infer<typeof insertSettingsSchema>;
-export type Settings = typeof settings.$inferSelect;
+export type Settings = typeof settings.$inferSelect & {
+  controlMode?: "automatic" | "manual" | "scheduled";
+  scheduledSettings?: {
+    enabled: boolean;
+    startTime: string; // "HH:MM" format
+    endTime: string;   // "HH:MM" format
+    durationMinutes: number;
+  };
+  // Additional sensor thresholds for alerts
+  airQualityThreshold?: number;      // AQI > 150 is unhealthy
+  temperatureHighThreshold?: number; // °C - too hot
+  temperatureLowThreshold?: number;  // °C - too cold
+  humidityHighThreshold?: number;    // % - too humid
+  humidityLowThreshold?: number;     // % - too dry
+  waterLevelLowThreshold?: number;   // % - tank low
+};
 
 // Export Data Schema
 export const exportFormatSchema = z.enum(["csv", "json"]);

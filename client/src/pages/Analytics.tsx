@@ -1,17 +1,71 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TrendData } from "@shared/schema";
-import { useState } from "react";
+import { TrendData, SensorReading } from "@shared/schema";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { ChartSkeleton } from "@/components/LoadingSkeleton";
+import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface AnalyticsProps {
   trendData: TrendData | null;
   isLoading?: boolean;
+  sensorTrends?: SensorReading[];
 }
 
-export function Analytics({ trendData, isLoading }: AnalyticsProps) {
+export function Analytics({ trendData, isLoading, sensorTrends = [] }: AnalyticsProps) {
   const [timeRange, setTimeRange] = useState<"24h" | "7d" | "30d">("24h");
+
+  // Convert sensor trends to chart data
+  const chartData = useMemo(() => {
+    if (!sensorTrends || sensorTrends.length === 0) return [];
+    
+    const now = Date.now();
+    let cutoffTime = now - 24 * 60 * 60 * 1000; // 24h
+    
+    if (timeRange === "7d") cutoffTime = now - 7 * 24 * 60 * 60 * 1000;
+    if (timeRange === "30d") cutoffTime = now - 30 * 24 * 60 * 60 * 1000;
+    
+    return sensorTrends
+      .filter((s) => new Date(s.timestamp).getTime() > cutoffTime)
+      .map((s) => ({
+        timestamp: new Date(s.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        moisture: s.soilMoisture,
+        humidity: s.airHumidity,
+        airTemp: s.airTemperature,
+        waterTemp: s.waterTemperature,
+        ph: (s.pH ?? 0).toFixed(1),
+        waterLevel: s.waterLevel,
+        flow: s.flowRate,
+        aqi: s.airQuality,
+      }));
+  }, [sensorTrends, timeRange]);
+
+  // Calculate statistics
+  const stats = useMemo(() => {
+    if (chartData.length === 0) {
+      return {
+        avgMoisture: 0,
+        avgTemp: 0,
+        avgHumidity: 0,
+        avgPh: 0,
+        totalFlow: 0,
+      };
+    }
+    
+    const moisture = chartData.map((d) => d.moisture);
+    const temp = chartData.map((d) => d.airTemp);
+    const humidity = chartData.map((d) => d.humidity);
+    const ph = chartData.map((d) => parseFloat(d.ph));
+    const flow = chartData.map((d) => d.flow);
+    
+    return {
+      avgMoisture: (moisture.reduce((a, b) => a + b, 0) / moisture.length).toFixed(1),
+      avgTemp: (temp.reduce((a, b) => a + b, 0) / temp.length).toFixed(1),
+      avgHumidity: (humidity.reduce((a, b) => a + b, 0) / humidity.length).toFixed(1),
+      avgPh: (ph.reduce((a, b) => a + b, 0) / ph.length).toFixed(1),
+      totalFlow: (flow.reduce((a, b) => a + b, 0)).toFixed(1),
+    };
+  }, [chartData]);
 
   if (isLoading) {
     return (
@@ -67,120 +121,147 @@ export function Analytics({ trendData, isLoading }: AnalyticsProps) {
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sensor Trends Chart */}
-        <Card className="p-6" data-testid="chart-sensor-trends">
-          <h3 className="text-lg font-semibold mb-4">Sensor Trends</h3>
-          <div className="h-64 flex items-center justify-center bg-muted/30 rounded-lg">
-            <div className="text-center space-y-2">
-              <p className="text-muted-foreground">Chart visualization for {timeRange}</p>
-              <p className="text-sm text-muted-foreground">
-                {trendData ? `${trendData.timestamps.length} data points` : "Loading..."}
-              </p>
+        {/* Soil Moisture & Humidity Chart */}
+        <Card className="p-6" data-testid="chart-moisture-humidity">
+          <h3 className="text-lg font-semibold mb-4">Moisture & Humidity Levels</h3>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="timestamp" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="moisture" stroke="#10b981" name="Soil Moisture (%)" />
+                <Line type="monotone" dataKey="humidity" stroke="#06b6d4" name="Air Humidity (%)" />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-80 flex items-center justify-center bg-muted/30 rounded-lg">
+              <p className="text-muted-foreground">No data available for {timeRange}</p>
             </div>
-          </div>
-          <div className="mt-4 flex gap-4 text-sm flex-wrap">
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-chart-1" />
-              <span className="text-muted-foreground">Soil Moisture</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-chart-2" />
-              <span className="text-muted-foreground">Air Humidity</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-chart-3" />
-              <span className="text-muted-foreground">Temperature</span>
-            </div>
-          </div>
-        </Card>
-
-        {/* Water Usage Chart */}
-        <Card className="p-6" data-testid="chart-water-usage">
-          <h3 className="text-lg font-semibold mb-4">Water Usage</h3>
-          <div className="h-64 flex items-center justify-center bg-muted/30 rounded-lg">
-            <div className="text-center space-y-2">
-              <p className="text-muted-foreground">Usage chart for {timeRange}</p>
-              <p className="text-sm text-muted-foreground">Total: 0 L</p>
-            </div>
-          </div>
-          <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-sm text-muted-foreground">Today</p>
-              <p className="text-xl font-bold">0 L</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">This Week</p>
-              <p className="text-xl font-bold">0 L</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">This Month</p>
-              <p className="text-xl font-bold">0 L</p>
-            </div>
-          </div>
-        </Card>
-
-        {/* pH Trends Chart */}
-        <Card className="p-6" data-testid="chart-ph-trends">
-          <h3 className="text-lg font-semibold mb-4">pH Level Trends</h3>
-          <div className="h-64 flex items-center justify-center bg-muted/30 rounded-lg">
-            <div className="text-center space-y-2">
-              <p className="text-muted-foreground">pH trends for {timeRange}</p>
-              <p className="text-sm text-muted-foreground">
-                {trendData ? `Range: ${Math.min(...trendData.ph).toFixed(1)} - ${Math.max(...trendData.ph).toFixed(1)}` : "Loading..."}
-              </p>
-            </div>
-          </div>
+          )}
         </Card>
 
         {/* Temperature Comparison Chart */}
         <Card className="p-6" data-testid="chart-temperature-comparison">
           <h3 className="text-lg font-semibold mb-4">Temperature Comparison</h3>
-          <div className="h-64 flex items-center justify-center bg-muted/30 rounded-lg">
-            <div className="text-center space-y-2">
-              <p className="text-muted-foreground">Air vs Water temperature</p>
-              <p className="text-sm text-muted-foreground">
-                {trendData ? `${trendData.timestamps.length} readings` : "Loading..."}
-              </p>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="timestamp" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="airTemp" stroke="#f59e0b" name="Air Temp (°C)" />
+                <Line type="monotone" dataKey="waterTemp" stroke="#06b6d4" name="Water Temp (°C)" />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-80 flex items-center justify-center bg-muted/30 rounded-lg">
+              <p className="text-muted-foreground">No data available for {timeRange}</p>
             </div>
-          </div>
-          <div className="mt-4 flex gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-amber-500" />
-              <span className="text-muted-foreground">Air Temperature</span>
+          )}
+        </Card>
+
+        {/* pH Level Trends Chart */}
+        <Card className="p-6" data-testid="chart-ph-trends">
+          <h3 className="text-lg font-semibold mb-4">pH Level Trends</h3>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorPh" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="timestamp" />
+                <YAxis domain={[6, 8]} />
+                <Tooltip />
+                <Area type="monotone" dataKey="ph" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorPh)" name="pH Level" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-80 flex items-center justify-center bg-muted/30 rounded-lg">
+              <p className="text-muted-foreground">No data available for {timeRange}</p>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-cyan-500" />
-              <span className="text-muted-foreground">Water Temperature</span>
+          )}
+        </Card>
+
+        {/* Water Level & Flow Chart */}
+        <Card className="p-6" data-testid="chart-water-level-flow">
+          <h3 className="text-lg font-semibold mb-4">Water Level & Flow Rate</h3>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="timestamp" />
+                <YAxis yAxisId="left" />
+                <YAxis yAxisId="right" orientation="right" />
+                <Tooltip />
+                <Legend />
+                <Line yAxisId="left" type="monotone" dataKey="waterLevel" stroke="#10b981" name="Water Level (%)" />
+                <Line yAxisId="right" type="monotone" dataKey="flow" stroke="#06b6d4" name="Flow Rate (L/min)" />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-80 flex items-center justify-center bg-muted/30 rounded-lg">
+              <p className="text-muted-foreground">No data available for {timeRange}</p>
             </div>
-          </div>
+          )}
+        </Card>
+
+        {/* Air Quality Chart */}
+        <Card className="p-6" data-testid="chart-air-quality">
+          <h3 className="text-lg font-semibold mb-4">Air Quality Index (AQI)</h3>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorAqi" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="timestamp" />
+                <YAxis />
+                <Tooltip />
+                <Area type="monotone" dataKey="aqi" stroke="#f59e0b" fillOpacity={1} fill="url(#colorAqi)" name="AQI" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-80 flex items-center justify-center bg-muted/30 rounded-lg">
+              <p className="text-muted-foreground">No data available for {timeRange}</p>
+            </div>
+          )}
         </Card>
       </div>
 
       {/* Summary Statistics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="p-4">
           <p className="text-sm text-muted-foreground mb-1">Avg Soil Moisture</p>
-          <p className="text-2xl font-bold gradient-text">
-            {trendData ? (trendData.moisture.reduce((a, b) => a + b, 0) / trendData.moisture.length).toFixed(1) : "0"}%
-          </p>
+          <p className="text-2xl font-bold gradient-text">{stats.avgMoisture}%</p>
         </Card>
         <Card className="p-4">
           <p className="text-sm text-muted-foreground mb-1">Avg Temperature</p>
-          <p className="text-2xl font-bold gradient-text">
-            {trendData ? (trendData.temperature.reduce((a, b) => a + b, 0) / trendData.temperature.length).toFixed(1) : "0"}°C
-          </p>
+          <p className="text-2xl font-bold gradient-text">{stats.avgTemp}°C</p>
         </Card>
         <Card className="p-4">
           <p className="text-sm text-muted-foreground mb-1">Avg Humidity</p>
-          <p className="text-2xl font-bold gradient-text">
-            {trendData ? (trendData.humidity.reduce((a, b) => a + b, 0) / trendData.humidity.length).toFixed(1) : "0"}%
-          </p>
+          <p className="text-2xl font-bold gradient-text">{stats.avgHumidity}%</p>
         </Card>
         <Card className="p-4">
           <p className="text-sm text-muted-foreground mb-1">Avg pH Level</p>
-          <p className="text-2xl font-bold gradient-text">
-            {trendData ? (trendData.ph.reduce((a, b) => a + b, 0) / trendData.ph.length).toFixed(1) : "0"}
-          </p>
+          <p className="text-2xl font-bold gradient-text">{stats.avgPh}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-sm text-muted-foreground mb-1">Total Flow</p>
+          <p className="text-2xl font-bold gradient-text">{stats.totalFlow} L</p>
         </Card>
       </div>
     </div>

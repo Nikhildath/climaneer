@@ -1,4 +1,10 @@
-import { HistoryEntry } from "@shared/schema";
+import { SensorReading } from "@shared/schema";
+
+type HistoryEntry = {
+  id: string;
+  timestamp: string;
+  sensors: SensorReading;
+};
 import { Button } from "@/components/ui/button";
 import { Download, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -88,7 +94,7 @@ export function History({ history, onExport }: HistoryProps) {
                     <td className="px-4 py-3 text-sm font-medium">{entry.sensors.soilMoisture}%</td>
                     <td className="px-4 py-3 text-sm font-medium">{entry.sensors.airHumidity}%</td>
                     <td className="px-4 py-3 text-sm font-medium">{entry.sensors.airTemperature}°C</td>
-                    <td className="px-4 py-3 text-sm font-medium">{entry.sensors.pH.toFixed(1)}</td>
+                    <td className="px-4 py-3 text-sm font-medium">{(entry.sensors.pH ?? 0).toFixed(1)}</td>
                     <td className="px-4 py-3 text-sm font-medium">{entry.sensors.waterLevel}%</td>
                     <td className="px-4 py-3 text-sm font-medium">{entry.sensors.airQuality}</td>
                   </tr>
@@ -132,7 +138,7 @@ export function History({ history, onExport }: HistoryProps) {
                 </div>
                 <div>
                   <p className="text-muted-foreground">pH Level</p>
-                  <p className="font-semibold">{entry.sensors.pH.toFixed(1)}</p>
+                  <p className="font-semibold">{(entry.sensors.pH ?? 0).toFixed(1)}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Water Level</p>

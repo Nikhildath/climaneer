@@ -15,7 +15,21 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ open, onOpenChange, settings, onSave }: SettingsModalProps) {
-  const [localSettings, setLocalSettings] = useState<Omit<SettingsType, "id">>(settings);
+  const [localSettings, setLocalSettings] = useState<Omit<SettingsType, "id">>(() => {
+    // Ensure scheduledSettings is always initialized with defaults
+    if (!settings.scheduledSettings) {
+      return {
+        ...settings,
+        scheduledSettings: {
+          enabled: false,
+          startTime: "08:00",
+          endTime: "18:00",
+          durationMinutes: 30,
+        },
+      };
+    }
+    return settings;
+  });
 
   const handleSave = () => {
     onSave(localSettings);
@@ -23,7 +37,17 @@ export function SettingsModal({ open, onOpenChange, settings, onSave }: Settings
   };
 
   const handleCancel = () => {
-    setLocalSettings(settings);
+    // Reset to original settings but preserve scheduledSettings defaults
+    const resetSettings = {
+      ...settings,
+      scheduledSettings: settings.scheduledSettings || {
+        enabled: false,
+        startTime: "08:00",
+        endTime: "18:00",
+        durationMinutes: 30,
+      },
+    };
+    setLocalSettings(resetSettings);
     onOpenChange(false);
   };
 
@@ -108,7 +132,214 @@ export function SettingsModal({ open, onOpenChange, settings, onSave }: Settings
                 data-testid="input-battery-threshold"
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="air-quality-threshold">Air Quality Index Threshold</Label>
+              <Input
+                id="air-quality-threshold"
+                type="number"
+                min="0"
+                max="500"
+                value={(localSettings as any).airQualityThreshold ?? 150}
+                onChange={(e) => 
+                  setLocalSettings({ ...localSettings, airQualityThreshold: Number(e.target.value) } as any)
+                }
+                data-testid="input-air-quality-threshold"
+              />
+              <p className="text-xs text-muted-foreground">Alert when AQI exceeds this value (default: 150)</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="temp-high">Max Temperature (°C)</Label>
+                <Input
+                  id="temp-high"
+                  type="number"
+                  min="-50"
+                  max="60"
+                  value={(localSettings as any).temperatureHighThreshold ?? 35}
+                  onChange={(e) => 
+                    setLocalSettings({ ...localSettings, temperatureHighThreshold: Number(e.target.value) } as any)
+                  }
+                  data-testid="input-temp-high"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="temp-low">Min Temperature (°C)</Label>
+                <Input
+                  id="temp-low"
+                  type="number"
+                  min="-50"
+                  max="60"
+                  value={(localSettings as any).temperatureLowThreshold ?? 5}
+                  onChange={(e) => 
+                    setLocalSettings({ ...localSettings, temperatureLowThreshold: Number(e.target.value) } as any)
+                  }
+                  data-testid="input-temp-low"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="humidity-high">Max Humidity (%)</Label>
+                <Input
+                  id="humidity-high"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={(localSettings as any).humidityHighThreshold ?? 80}
+                  onChange={(e) => 
+                    setLocalSettings({ ...localSettings, humidityHighThreshold: Number(e.target.value) } as any)
+                  }
+                  data-testid="input-humidity-high"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="humidity-low">Min Humidity (%)</Label>
+                <Input
+                  id="humidity-low"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={(localSettings as any).humidityLowThreshold ?? 20}
+                  onChange={(e) => 
+                    setLocalSettings({ ...localSettings, humidityLowThreshold: Number(e.target.value) } as any)
+                  }
+                  data-testid="input-humidity-low"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="water-level-low">Low Water Level (%)</Label>
+              <Input
+                id="water-level-low"
+                type="number"
+                min="0"
+                max="100"
+                value={(localSettings as any).waterLevelLowThreshold ?? 20}
+                onChange={(e) => 
+                  setLocalSettings({ ...localSettings, waterLevelLowThreshold: Number(e.target.value) } as any)
+                }
+                data-testid="input-water-level-low"
+              />
+            </div>
           </div>
+
+          {/* Control Mode Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Control Mode</h3>
+            <Separator />
+            
+            <div className="space-y-2">
+              <Label htmlFor="control-mode">Pump Control Mode</Label>
+              <select
+                id="control-mode"
+                value={localSettings.controlMode ?? "automatic"}
+                onChange={(e) => 
+                  setLocalSettings({ ...localSettings, controlMode: e.target.value as "automatic" | "manual" | "scheduled" })
+                }
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                data-testid="select-control-mode"
+              >
+                <option value="automatic">Automatic (Firebase-controlled)</option>
+                <option value="manual">Manual (On/Off)</option>
+                <option value="scheduled">Scheduled (Time-based)</option>
+              </select>
+              <p className="text-xs text-muted-foreground">
+                {localSettings.controlMode === "automatic" ? "Firebase controls pump automatically" : 
+                 localSettings.controlMode === "manual" ? "You control pump manually" :
+                 "Pump runs on schedule"}
+              </p>
+            </div>
+
+            {/* Scheduled Mode Settings */}
+            {localSettings.controlMode === "scheduled" && (
+              <div className="space-y-3 p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="scheduled-enabled" className="text-sm">Enable Schedule</Label>
+                    <p className="text-xs text-muted-foreground">Turn on to activate scheduled pump</p>
+                  </div>
+                  <Switch
+                    id="scheduled-enabled"
+                    checked={localSettings.scheduledSettings?.enabled ?? false}
+                    onCheckedChange={(checked) => {
+                      const prev = localSettings.scheduledSettings ?? { enabled: false, startTime: "08:00", endTime: "18:00", durationMinutes: 30 };
+                      setLocalSettings({
+                        ...localSettings,
+                        scheduledSettings: { ...prev, enabled: checked },
+                      });
+                    }}
+                    data-testid="switch-scheduled-enabled"
+                  />
+                </div>
+
+                {localSettings.scheduledSettings?.enabled && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="scheduled-start-time" className="text-sm">Start Time (HH:MM)</Label>
+                      <Input
+                        id="scheduled-start-time"
+                        type="time"
+                        value={localSettings.scheduledSettings?.startTime ?? "08:00"}
+                        onChange={(e) => {
+                          const prev = localSettings.scheduledSettings ?? { enabled: false, startTime: "08:00", endTime: "18:00", durationMinutes: 30 };
+                          setLocalSettings({
+                            ...localSettings,
+                            scheduledSettings: { ...prev, startTime: e.target.value },
+                          });
+                        }}
+                        data-testid="input-scheduled-start-time"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="scheduled-end-time" className="text-sm">End Time (HH:MM)</Label>
+                      <Input
+                        id="scheduled-end-time"
+                        type="time"
+                        value={localSettings.scheduledSettings?.endTime ?? "18:00"}
+                        onChange={(e) => {
+                          const prev = localSettings.scheduledSettings ?? { enabled: false, startTime: "08:00", endTime: "18:00", durationMinutes: 30 };
+                          setLocalSettings({
+                            ...localSettings,
+                            scheduledSettings: { ...prev, endTime: e.target.value },
+                          });
+                        }}
+                        data-testid="input-scheduled-end-time"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="scheduled-duration" className="text-sm">Pump Duration (minutes)</Label>
+                      <Input
+                        id="scheduled-duration"
+                        type="number"
+                        min="1"
+                        max="120"
+                        value={localSettings.scheduledSettings?.durationMinutes ?? 30}
+                        onChange={(e) => {
+                          const prev = localSettings.scheduledSettings ?? { enabled: false, startTime: "08:00", endTime: "18:00", durationMinutes: 30 };
+                          setLocalSettings({
+                            ...localSettings,
+                            scheduledSettings: { ...prev, durationMinutes: Number(e.target.value) },
+                          });
+                        }}
+                        data-testid="input-scheduled-duration"
+                      />
+                      <p className="text-xs text-muted-foreground">Pump will turn on for this duration within the time window</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          <Separator />
 
           {/* Preferences Section */}
           <div className="space-y-4">

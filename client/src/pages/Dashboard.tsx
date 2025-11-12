@@ -5,6 +5,7 @@ import { WaterTankVisualization } from "@/components/WaterTankVisualization";
 import { PHScaleVisualization } from "@/components/PHScaleVisualization";
 import { TemperatureGauge } from "@/components/TemperatureGauge";
 import { AQIBar } from "@/components/AQIBar";
+import { WeatherCard } from "@/components/WeatherCard";
 import { SensorReading, SystemStatus } from "@shared/schema";
 import { Card } from "@/components/ui/card";
 import { useState, useEffect } from "react";
@@ -63,6 +64,11 @@ export function Dashboard({ sensorData, systemStatus, aiRecommendation }: Dashbo
           </div>
         </Card>
       )}
+
+      {/* Weather Section */}
+      <section data-testid="weather-section">
+        <WeatherCard />
+      </section>
 
       {/* Status Overview */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-testid="status-overview">

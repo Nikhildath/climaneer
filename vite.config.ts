@@ -2,10 +2,25 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+import fs from "fs";
+
+// Plugin to remove favicon after build
+const removeFaviconPlugin = {
+  name: "remove-favicon",
+  closeBundle() {
+    const faviconPath = path.resolve(import.meta.dirname, "dist/public/favicon.ico");
+    if (fs.existsSync(faviconPath)) {
+      fs.unlinkSync(faviconPath);
+      console.log("✓ Favicon removed");
+    }
+  },
+};
 
 export default defineConfig({
+  base: "/climaneer/",
   plugins: [
     react(),
+    removeFaviconPlugin,
     runtimeErrorOverlay(),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined

@@ -13,9 +13,12 @@ import { SettingsModal } from "@/components/SettingsModal";
 import { ExportModal } from "@/components/ExportModal";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { QuickActions } from "@/components/QuickActions";
+import { VoiceButton } from "@/components/VoiceButton";
+import { VoiceStatusIndicator } from "@/components/VoiceStatusIndicator";
 import { DashboardSkeleton } from "@/components/LoadingSkeleton";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
+import { useVoiceControl } from "@/hooks/use-voice-control";
 import { 
   SensorReading,
   InsertSensorReading,
@@ -662,6 +665,29 @@ function AppContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.controlMode, settings.scheduledSettings, systemStatus?.pumpStatus]);
 
+  // Voice Control Hook
+  const { listening, startListening, stopListening, transcript } = useVoiceControl({
+    onCommand: (command) => {
+      console.log("[Voice] Processing command:", command);
+    },
+    getSensorValue: (key: string) => {
+      if (!sensorData) return "not available";
+      const mapping: Record<string, any> = {
+        soilMoisture: `${sensorData.soilMoisture?.toFixed(0) || 0}%`,
+        airHumidity: `${sensorData.airHumidity?.toFixed(0) || 0}%`,
+        airTemperature: `${sensorData.airTemperature?.toFixed(1) || 0}°C`,
+        phValue: `${sensorData.pH?.toFixed(1) || 0}`,
+        waterLevel: `${sensorData.waterLevel?.toFixed(0) || 0}%`,
+        airQuality: `${sensorData.airQuality?.toFixed(0) || 0} AQI`,
+        batteryLevel: `${sensorData.battery?.toFixed(0) || 0}%`,
+        flowRate: `${sensorData.flowRate?.toFixed(1) || 0} L/min`,
+      };
+      return mapping[key] || "not available";
+    },
+    onPumpToggle: async (on: boolean) => await togglePump(on),
+    onAutoMode: async () => await switchToAutoMode(),
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -772,6 +798,15 @@ function AppContent() {
           currentMode={settings.controlMode as "automatic" | "manual" | "scheduled"}
         />
       )}
+
+      {/* Voice Control Button */}
+      <VoiceButton 
+        listening={listening}
+        onToggle={() => listening ? stopListening() : startListening()}
+      />
+
+      {/* Voice Status Indicator */}
+      <VoiceStatusIndicator listening={listening} transcript={transcript} />
 
       {/* Modals */}
       <SettingsModal 

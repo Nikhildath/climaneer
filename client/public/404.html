@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loading...</title>
+  <script>
+    // GitHub Pages 404 redirect for SPA routing
+    // Store the attempted path and redirect to root
+    (function() {
+      const currentPath = window.location.pathname;
+      const currentSearch = window.location.search;
+      const currentHash = window.location.hash;
+      
+      // Store full path in sessionStorage
+      if (currentPath !== '/climaneer/') {
+        sessionStorage.setItem('redirectPath', currentPath + currentSearch + currentHash);
+        // Redirect to root
+        window.location.replace(currentPath.split('/').slice(0, 2).join('/') + '/');
+      }
+    })();
+  </script>
+</head>
+<body>
+  <p>Redirecting...</p>
+</body>
+</html>
+

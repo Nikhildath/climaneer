@@ -7,6 +7,7 @@ import { TemperatureGauge } from "@/components/TemperatureGauge";
 import { AQIBar } from "@/components/AQIBar";
 import { SensorReading, SystemStatus } from "@shared/schema";
 import { Card } from "@/components/ui/card";
+import { useState, useEffect } from "react";
 import { 
   Droplets, 
   Cloud, 
@@ -30,6 +31,24 @@ interface DashboardProps {
 }
 
 export function Dashboard({ sensorData, systemStatus, aiRecommendation }: DashboardProps) {
+  const [waterUsedToday, setWaterUsedToday] = useState(0);
+  const [previousFlowRate, setPreviousFlowRate] = useState(0);
+  const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
+
+  // Calculate water usage based on flow rate
+  useEffect(() => {
+    const now = Date.now();
+    const timeDiffMinutes = (now - lastUpdateTime) / (1000 * 60); // Convert to minutes
+    
+    if (timeDiffMinutes > 0 && sensorData.flowRate > 0) {
+      // Calculate liters used: flowRate (L/min) * time (min)
+      const litersUsed = sensorData.flowRate * timeDiffMinutes;
+      setWaterUsedToday((prev) => prev + litersUsed);
+    }
+    
+    setPreviousFlowRate(sensorData.flowRate);
+    setLastUpdateTime(now);
+  }, [sensorData.flowRate]);
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-6 pb-24">
       {/* AI Recommendation Card */}
@@ -201,11 +220,11 @@ export function Dashboard({ sensorData, systemStatus, aiRecommendation }: Dashbo
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Today's Water Usage</p>
-              <p className="text-2xl font-bold">0 L</p>
+              <p className="text-2xl font-bold">{waterUsedToday.toFixed(1)} L</p>
             </div>
           </div>
           <div className="text-xs text-muted-foreground">
-            Average: 0 L/day
+            Current flow: {sensorData.flowRate.toFixed(1)} L/min
           </div>
         </div>
 

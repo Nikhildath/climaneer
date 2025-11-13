@@ -29,29 +29,7 @@
     <meta name="apple-mobile-web-app-title" content="CLIMANEER" />
     
     <!-- GitHub Pages 404 redirect handling -->
-    <script>
-      (function() {
-        // Check if we have a stored redirect path from 404.html
-        const redirectPath = sessionStorage.getItem('redirectPath');
-        if (redirectPath) {
-          console.log("[index] Found redirectPath:", redirectPath);
-          sessionStorage.removeItem('redirectPath');
-          
-          const currentUrl = window.location.pathname + window.location.search + window.location.hash;
-          
-          // Only apply redirect if it's different from current URL
-          if (redirectPath !== currentUrl && redirectPath !== '/climaneer/') {
-            console.log("[index] Applying redirect from:", currentUrl, "to:", redirectPath);
-            // Use history.replaceState to silently update the URL
-            window.history.replaceState(
-              { path: redirectPath },
-              '',
-              redirectPath
-            );
-          }
-        }
-      })();
-    </script>
+    
   </head>
   <body>
     <div id="root"></div>

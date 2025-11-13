@@ -17,7 +17,7 @@ const removeFaviconPlugin = {
 };
 
 export default defineConfig({
-  base: "/climaneer/",
+  base: "/",
   plugins: [
     react(),
     removeFaviconPlugin,

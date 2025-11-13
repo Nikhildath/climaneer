@@ -16,6 +16,9 @@
     
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Puter.js for TTS -->
+    <script src="https://js.puter.com/v2/"></script>
     
     <!-- PWA manifest -->
     <link rel="manifest" href="/manifest.json" />
@@ -30,14 +33,22 @@
       (function() {
         // Check if we have a stored redirect path from 404.html
         const redirectPath = sessionStorage.getItem('redirectPath');
-        if (redirectPath && redirectPath !== window.location.pathname + window.location.search + window.location.hash) {
+        if (redirectPath) {
+          console.log("[index] Found redirectPath:", redirectPath);
           sessionStorage.removeItem('redirectPath');
-          // Use history.replaceState to silently update the URL without loading a new page
-          window.history.replaceState(
-            { path: redirectPath },
-            '',
-            redirectPath
-          );
+          
+          const currentUrl = window.location.pathname + window.location.search + window.location.hash;
+          
+          // Only apply redirect if it's different from current URL
+          if (redirectPath !== currentUrl && redirectPath !== '/climaneer/') {
+            console.log("[index] Applying redirect from:", currentUrl, "to:", redirectPath);
+            // Use history.replaceState to silently update the URL
+            window.history.replaceState(
+              { path: redirectPath },
+              '',
+              redirectPath
+            );
+          }
         }
       })();
     </script>

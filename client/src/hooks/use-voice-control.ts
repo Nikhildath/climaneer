@@ -40,9 +40,18 @@ export function useVoiceControl(options: VoiceControlOptions) {
 
   const speak = (text: string) => {
     try {
-      // Cancel any ongoing speech - respond to latest command immediately
+      // Try using Puter.js for TTS first
+      if ((window as any).puter && (window as any).puter.ui && (window as any).puter.ui.alert) {
+        // Puter available, use it for better TTS
+        (window as any).puter.ui.alert(text, {
+          type: 'info',
+          duration: 3000,
+        });
+      }
+      
+      // Also use Web Speech API as fallback for audio output
       speechSynthesis.cancel();
-      speakQueueRef.current = [text]; // Clear queue and set only latest
+      speakQueueRef.current = [text];
       
       const msg = new SpeechSynthesisUtterance(text);
       msg.lang = "en-US";

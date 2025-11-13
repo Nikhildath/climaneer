@@ -39,6 +39,13 @@ function AppContent() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
 
+  // Ensure we default to dashboard on first load
+  useEffect(() => {
+    if (!location || location === "") {
+      setLocation("/");
+    }
+  }, [location, setLocation]);
+
   // Live data from Firebase Realtime Database (REST API)
   const FIREBASE_URL = "https://aquaclima-datatabase-default-rtdb.firebaseio.com";
 

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loading...</title>
+  <script>
+    // GitHub Pages 404 redirect for SPA routing
+    // This script captures the 404'd path and redirects to index.html
+    // which then uses the saved path to navigate to the correct page
+    (function() {
+      const currentPath = window.location.pathname;
+      const currentSearch = window.location.search;
+      const currentHash = window.location.hash;
+      
+      console.log("[404] Captured path:", currentPath, currentSearch, currentHash);
+      
+      // Store full path in sessionStorage BEFORE redirecting
+      if (currentPath !== '/climaneer/') {
+        const fullPath = currentPath + currentSearch + currentHash;
+        console.log("[404] Storing redirect path:", fullPath);
+        sessionStorage.setItem('redirectPath', fullPath);
+        
+        // Redirect to root index.html which will restore the path
+        const rootPath = '/climaneer/';
+        console.log("[404] Redirecting to:", rootPath);
+        window.location.replace(rootPath);
+      }
+    })();
+  </script>
+</head>
+<body>
+  <p>Redirecting to app...</p>
+</body>
+</html>
+
